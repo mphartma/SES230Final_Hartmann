@@ -1,0 +1,80 @@
+echo "# SES230Final_Hartmann" >> README.md
+  git init
+  git add README.md
+  git commit -m "first commit"
+  git branch -M main
+  git remote add origin https://github.com/mphartma/SES230Final_Hartmann.git
+  git push -u origin main
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+class Particle:
+    def __init__(self, mass, position, velocity):
+        self.mass = mass
+        self.position = position.astype(float)
+        self.velocity = velocity.astype(float)
+
+def gravitational_force(particle1, particle2, G=1):
+    r = particle2.position - particle1.position
+    r_magnitude = np.linalg.norm(r)
+    force_magnitude = G * particle1.mass * particle2.mass / r_magnitude**2
+    force = force_magnitude * r / r_magnitude
+    return force
+
+def update_positions_velocities(particles, dt=0.01, G=1):
+    for i in range(len(particles)):
+        for j in range(i+1, len(particles)):
+            force = gravitational_force(particles[i], particles[j], G)
+            particles[i].velocity += force / particles[i].mass * dt
+            particles[j].velocity -= force / particles[j].mass * dt
+
+    for particle in particles:
+        particle.position += particle.velocity * dt
+
+def init():
+    for particle in particles_two_body + particles_three_body:
+        particle.scatter = ax.scatter([], [])
+    
+    return [particle.scatter for particle in particles_two_body + particles_three_body]
+
+def animate(frame):
+    # Simulate orbits
+    update_positions_velocities(particles_two_body)
+    update_positions_velocities(particles_three_body)
+
+    # Update scatter plot
+    for particle in particles_two_body + particles_three_body:
+        particle.scatter.set_offsets([particle.position[0], particle.position[1]])
+
+    return [particle.scatter for particle in particles_two_body + particles_three_body]
+
+# Two-body orbit
+particle1 = Particle(mass=1, position=np.array([-1.0, 0.0]), velocity=np.array([0.0, 1.0]))
+particle2 = Particle(mass=1, position=np.array([1.0, 0.0]), velocity=np.array([0.0, -1.0]))
+
+particles_two_body = [particle1, particle2]
+
+# Three-body orbit
+particle1 = Particle(mass=1, position=np.array([-1.0, 0.0]), velocity=np.array([0.0, 1.0]))
+particle2 = Particle(mass=1, position=np.array([1.0, 0.0]), velocity=np.array([0.0, -1.0]))
+particle3 = Particle(mass=1, position=np.array([0.0, 3.0]), velocity=np.array([1.0, 0.0]))
+
+particles_three_body = [particle1, particle2, particle3]
+
+# Set up the plot
+fig, ax = plt.subplots(figsize=(6, 6))
+ax.set_xlim(-5, 5)
+ax.set_ylim(-5, 5)
+ax.set_title('Gravitational Particle Simulation')
+ax.set_xlabel('X Position')
+ax.set_ylabel('Y Position')
+
+# Initialize scatter plot
+init()
+
+# Create animation
+animation = FuncAnimation(fig, animate, frames=range(1000), init_func=init, blit=True, interval=50, repeat=False)
+
+plt.show()
