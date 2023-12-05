@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
+
+class Particle:
+    def __init__(self, mass, position, velocity):
+        self.mass = mass
+        self.position = position.astype(float)
+        self.velocity = velocity.astype(float)
+
+def gravitational_force(particle1, particle2, G=2):
+    r = particle2.position - particle1.position
+    r_magnitude = np.linalg.norm(r)
+    force_magnitude = G * particle1.mass * particle2.mass / r_magnitude**2
+    force = force_magnitude * r / r_magnitude
+    return force
+
+def update_positions_velocities(particles, dt=0.01, G=2):
+    for i in range(len(particles)):
+        for j in range(i+1, len(particles)):
+            force = gravitational_force(particles[i], particles[j], G)
+            particles[i].velocity += force / particles[i].mass * dt
+            particles[j].velocity -= force / particles[j].mass * dt
+
+    for particle in particles:
+        particle.position += particle.velocity * dt
+
+# Updated initial conditions for a binary orbit
+particle1 = Particle(mass=5, position=np.array([-2, 0]), velocity=np.array([0, 1]))
+particle2 = Particle(mass=5, position=np.array([2, 0]), velocity=np.array([0, -1]))
+particle3 = Particle(mass=0.5, position=np.array([-2.5, 0]), velocity=np.array([2, 0]))
+particle4 = Particle(mass=0.5, position=np.array([2.5, 0]), velocity=np.array([-2, 0]))
+
+particles = [particle1, particle2, particle3, particle4]
+positions = []
+
+fig, ax = plt.subplots(figsize=(5, 5))
+scatters = [ax.scatter([], [], marker='o') for _ in particles]
+
+ax.set_xlim(-5, 5)
+ax.set_ylim(-5, 5)
+ax.set_xlabel('X Position')
+ax.set_ylabel('Y Position')
+ax.set_title('Binary Orbit Animation')
+
+def update(frame):
+    positions.append([particle.position.copy() for particle in particles])
+    update_positions_velocities(particles)
+
+    for i, scatter in enumerate(scatters):
+        scatter.set_offsets(positions[-1][i])
+
+    return scatters
+
+animation = FuncAnimation(fig, update, frames=1000, interval=20, blit=True)
+
+#display animation in Google Colab
+HTML(animation.to_jshtml())
